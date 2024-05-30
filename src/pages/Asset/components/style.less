@@ -1,0 +1,212 @@
+// @import '~antd/es/style/themes/default.less';
+
+.order {
+  .ant-form-item {
+    padding-bottom: 0px !important;
+    margin-bottom: 10px !important;
+  }
+}
+
+.voltage-box {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin-top: 10px;
+  background: #fff;
+  padding: 10px 10px 10px 20px
+}
+
+.volage-title {
+  height: 34px;
+  overflow: hidden;
+  font-family: Alibaba PuHuiTi
+}
+
+.volage-title .max,
+.volage-title {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center
+}
+
+.volage-title .max {
+  font-size: 14px;
+  font-weight: 400;
+  color: #404457
+}
+.volage-title .max .dot {
+  width: 8px;
+  height: 8px;
+  background: #21ca40;
+  border-radius: 50%
+}
+
+
+
+[data-theme=theme1] .volage-title {
+  color: #00e9e2
+}
+
+.volage-title .title-left {
+  font-size: 14px;
+  font-weight: 500;
+  color: #10152d;
+  line-height: 34px;
+  font-family: Alibaba-PuHuiTi-M, Alibaba-PuHuiTi
+}
+
+[data-theme=theme1] .volage-title .title-left {
+  color: #00e9e2
+}
+
+.volage-title .title-right {
+  float: right;
+  font-size: 14px;
+  height: 14px;
+  font-weight: 300;
+  color: #333;
+  line-height: 30px
+}
+
+[data-theme=theme1] .volage-title .title-right {
+  color: #fff
+}
+
+.volage-title .title-right div {
+  width: 25px;
+  height: 14px;
+  display: inline-block;
+  padding-right: 10px;
+  background: -webkit-gradient(linear, left bottom, left top, from(#177500), color-stop(4%, #007500), color-stop(53%, #2de900), color-stop(84%, #a7ff9b), to(#07ed10));
+  background: linear-gradient(1turn, #177500, #007500 4%, #2de900 53%, #a7ff9b 84%, #07ed10);
+  opacity: 1;
+  border-radius: 4px
+}
+
+.volage-title .title-right span {
+  display: inline-block;
+  line-height: 14px
+}
+
+.volage-zhu {
+  text-align: right;
+  height: 22px;
+  font-size: 12px;
+  font-family: Alibaba PuHuiTi;
+  font-weight: 500;
+  line-height: 22px;
+  color: #f52833
+}
+
+.voltage-list {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  padding: 10px 10px 10px 0
+}
+
+.voltage-list .battery-wrap {
+  width: 114px;
+  height: 42px;
+  background: #f9f9fb;
+  border-radius: 8px;
+  margin: 6px 12px 6px 0;
+  position: relative
+}
+
+.voltage-list .battery-wrap .num,
+.voltage-list .battery-wrap {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center
+}
+
+.voltage-list .battery-wrap .num {
+  width: 16px;
+  height: 16px;
+  color: #fff;
+  background: linear-gradient(131deg, #08f, #06f);
+  border-radius: 3px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 12px;
+  font-family: PingFangSC-Medium, PingFang SC;
+  font-weight: 500
+}
+
+.voltage-list .battery-wrap .num-max {
+  background: #00b793
+}
+
+
+.voltage-list .battery-wrap .battery {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  list-style: none
+}
+
+.voltage-list .battery-wrap .battery .span-color {
+  width: 18px;
+  padding-top: 10px;
+  font-size: 14px;
+  font-family: Impact;
+  font-weight: 400;
+  color: #1879b9
+}
+
+[data-theme=theme1] .voltage-list .battery-wrap .battery .span-color {
+  color: #00e9e2
+}
+
+.voltage-list .battery-wrap .battery .red {
+  width: 18px;
+  color: #07aa1d;
+  padding-top: 10px;
+  font-size: 14px;
+  font-family: Impact;
+  font-weight: 400
+}
+
+.voltage-list .battery-wrap .battery .img_wrap {
+  width: 92px;
+  height: 52px;
+  position: relative;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center
+}
+
+.voltage-list .battery-wrap .battery .img_wrap img {
+  position: absolute;
+  width: 64px
+}
+
+.voltage-list .battery-wrap .battery .img_wrap .number {
+  font-size: 10px;
+  font-family: AlimamaShuHeiTi-Bold, AlimamaShuHeiTi;
+  font-weight: 300;
+  color: #fff;
+  position: relative;
+  z-index: 100
+}
