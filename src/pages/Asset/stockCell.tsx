@@ -461,6 +461,7 @@ const StockCell: React.FC = () => {
       valueType: 'select',
       hideInForm: true,
       hideInTable: true,
+      hideInDescriptions:true,
       width: 'lg',
       request:async () => {
         return handleOptionSelect('OWNERSHIP','CELL');
