@@ -6,12 +6,13 @@ import { FormattedMessage, useIntl, useRequest } from '@umijs/max';
 import { Button, message, Modal, Space, Table } from 'antd';
 import React, { useRef, useState } from 'react';
 import StoreAnalyseModel from './components/StoreAnalyseModel';
-import { StoreAnalyseItem } from './data';
+import { Pagination, StoreAnalyseItem, StoreParams } from './data';
 import {
   addStoreAnalyse,
   queryBusinessSelect,
   queryStoreAnalyseList,
   queryStoreGroupSelect,
+  queryStoreTreeSelect,
   removeStoreAnalyse,
   removeStoreAnalyseByIds,
   updateStoreAnalyse,
@@ -23,6 +24,8 @@ const StoreAnaylse: React.FC = () => {
   const [editView, setEditView] = useState<boolean>(false);
   const [currentRow, setCurrentRow] = useState<StoreAnalyseItem>();
   const [exportParams, setExportParams] = useState({}); //导出参数
+  const [searchStoreIds, setSearchStoreIds] = useState<string>('');
+
 
   //国际化
   const intl = useIntl();
@@ -68,6 +71,28 @@ const StoreAnaylse: React.FC = () => {
       storeGroupDataList[item.id] = item.name;
     });
   }
+
+  //读取仓库树数据
+  const handleStoreTreeSelect = async (businessId?: any) => {
+    if (businessId == '') {
+      return;
+    }
+    const pagination: Pagination = {
+      current: 1,
+    };
+    const options: StoreParams = {
+      useType: 'INTERNAL',
+      businessId: businessId,
+    };
+
+    //读取仓库数据
+    const { data: storeTreeData } = await queryStoreTreeSelect({
+      ...pagination,
+      ...options,
+    });
+    return storeTreeData;
+  };
+
 
   const handleAction = async (fields: StoreAnalyseItem) => {
     const loadingHidde = message.loading(
@@ -207,6 +232,54 @@ const StoreAnaylse: React.FC = () => {
       hideInSearch: true,
       width: 'sm',
     },
+
+    
+
+    {
+      title: '站点(多选)',
+      dataIndex: 'searchStoreIds',
+      key: 'searchStoreIds',
+      valueType: 'cascader',
+      dependencies: ['businessId'],
+      request: async (params) => {
+        if (params.businessId != undefined) {
+          return handleStoreTreeSelect(params.businessId);
+        }
+      },
+      hideInForm: true,
+      hideInTable: true,
+      hideInDescriptions: true,
+      formItemProps: {},
+      fieldProps: {
+        multiple: true,
+        onChange: (value: string[]) => {
+          let storeIdsString = '';
+          let i = 1;
+          value.map((item) => {
+            if (item[1] !== undefined) {
+              if (i == 1) {
+                storeIdsString = item[1];
+              } else {
+                storeIdsString += ',' + item[1];
+              }
+            }
+            i++;
+          });
+          setSearchStoreIds(storeIdsString);
+        },
+        maxTagCount: 'responsive',
+        showCheckedStrategy: 'SHOW_CHILD',
+        fieldNames: {
+          children: 'children',
+          label: 'label',
+        },
+        //options: cascaderOptions,
+        dependencies: ['businessId'],
+        showSearch: true,
+      },
+    },
+
+
 
     {
       title: '分类',
@@ -369,6 +442,9 @@ const StoreAnaylse: React.FC = () => {
           }}
           pagination={paginationProps}
           request={(params) => {
+            if (searchStoreIds !== undefined && searchStoreIds !== '') {
+              params.searchStoreIds = searchStoreIds;
+            }
             const res = queryStoreAnalyseList({ ...params });
             res.then((value) => {
               params.pageSize = value.total;
