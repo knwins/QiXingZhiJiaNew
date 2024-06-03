@@ -16,7 +16,7 @@ export type StockItem = {
   quantity?: string;
   updateTime?: Date;
   createTime: Date;
-  brandSpec: OptionItem; //品牌
+  spec: OptionItem; //品牌
   business: BusinessItem; //运营商
   store: StoreItem;
   label?: string;
