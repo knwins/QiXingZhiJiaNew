@@ -5,14 +5,12 @@ import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useRequest } from '@umijs/max';
 import { Button, Drawer, message, Modal, Space, Table } from 'antd/lib';
-import React, { useRef, useState } from 'react';
-import { queryBusinessSelect, queryStoreTreeSelect } from '../Operation/service';
+import React, { useRef, useState, useEffect } from 'react';
+import { queryBusinessSelect, queryStoreTreeSelect, syncFNJStoreList } from '../Operation/service';
 import { queryOptionSelect } from '../Setting/service';
 import StockModel from './components/StockModel';
 import { Pagination, StockItem, StockLogItem, StockLogParams } from './data';
 
-import { StoreParams } from '../Operation/data';
-import { OptionItem, OptionParams } from '../Setting/data';
 import {
   addStock,
   exportStockList,
@@ -23,7 +21,9 @@ import {
   removeStockByIds,
   updateStock,
 } from './service';
-const StockCell: React.FC = () => {
+import { StoreParams } from '../Operation/data';
+import { log } from '@antv/g2plot/lib/utils';
+const StockCabinet: React.FC = () => {
   const tableRef = React.useRef();
   const actionRef = useRef<ActionType>();
   const [done, setDone] = useState<boolean>(false);
@@ -38,51 +38,12 @@ const StockCell: React.FC = () => {
   //国际化
   const intl = useIntl();
 
-  const handleOptionSelect = async (optionType: any, category?: any) => {
-    const pagination: Pagination = {
-      current: 1,
-    };
-    const options: OptionParams = {
-      category: category,
-      useType: 'INTERNAL',
-    };
-    //读取仓库数据
-    const { data: optionData } = await queryOptionSelect({
-      ...pagination,
-      ...options,
+  //读取属性数据
+  const { data } = useRequest(() => {
+    return queryOptionSelect({
+      category: 'CABINET',
     });
-
-    if (optionType == 'OWNERSHIP') {
-      const listOptions = [];
-      if (optionData.ownership) {
-        for (let i = 0; i < optionData.ownership.length; i += 1) {
-          const item = optionData.ownership[i];
-          if (item) {
-            listOptions.push({
-              label: item.label,
-              value: item.id,
-            });
-          }
-        }
-      }
-      return listOptions;
-    }
-    if (optionType == 'SPEC') {
-      const listOptions = [];
-      if (optionData.spec) {
-        for (let i = 0; i < optionData.spec.length; i += 1) {
-          const item = optionData.spec[i];
-          if (item) {
-            listOptions.push({
-              label: item.label,
-              value: item.id,
-            });
-          }
-        }
-      }
-      return listOptions;
-    }
-  };
+  });
 
   //读取运营商数据
   const { data: businessData } = useRequest(() => {
@@ -90,10 +51,14 @@ const StockCell: React.FC = () => {
   });
 
   const businessListOptions = {};
+  const ownershipListOptions = {};
+
+  //Execl导出数据使用
   const businessListData = {};
+  const ownershipListData = {};
 
   if (businessData) {
-    businessData.map((item: OptionItem) => {
+    businessData.map((item) => {
       businessListOptions[item.id] = {
         text: item.name,
         value: item.id,
@@ -101,6 +66,7 @@ const StockCell: React.FC = () => {
       businessListData[item.id] = item.name;
     });
   }
+
 
   //读取仓库树数据
   const handleStoreTreeSelect = async (businessId?: any) => {
@@ -122,6 +88,8 @@ const StockCell: React.FC = () => {
     });
     return storeTreeData;
   };
+
+
 
   /**
    * Stock 操作
@@ -299,11 +267,12 @@ const StockCell: React.FC = () => {
     }
   };
 
+
   const paginationProps = {
     showSizeChanger: true,
     showQuickJumper: true,
   };
-
+  
   const cparams: StockLogParams = {
     stockId: currentRow?.id,
   };
@@ -315,19 +284,11 @@ const StockCell: React.FC = () => {
       hideInForm: true,
       hideInTable: true,
       hideInDescriptions: true,
-
+      
       valueType: 'text',
       fieldProps: {
         placeholder: '关键词搜索',
       },
-    },
-    {
-      title: '硬件码',
-      dataIndex: 'gpsNumber',
-      valueType: 'text',
-      hideInTable: true,
-      hideInSearch: true,
-      width: 'lg',
     },
     {
       title: '编号',
@@ -358,12 +319,12 @@ const StockCell: React.FC = () => {
     {
       title: '所属产权',
       dataIndex: ['ownership', 'name'],
-      valueType: 'text',
+      valueType: 'select',
       hideInForm: true,
       hideInSearch: true,
       width: 'lg',
+      valueEnum: ownershipListOptions,
     },
-
     {
       title: '规格',
       dataIndex: 'spec',
@@ -390,14 +351,14 @@ const StockCell: React.FC = () => {
       hideInSearch: true,
       ellipsis: true,
       hideInTable: true,
-
+      
       width: 'lg',
     },
 
     {
       title: '运营商',
       dataIndex: 'businessId',
-      key: 'businessId',
+      key:'businessId',
       valueType: 'select',
       width: '80px',
       hideInForm: true,
@@ -415,7 +376,7 @@ const StockCell: React.FC = () => {
       dataIndex: 'searchStoreIds',
       key: 'searchStoreIds',
       valueType: 'cascader',
-      dependencies: ['businessId'],
+      dependencies:['businessId'],
       request: async (params) => {
         console.log(params);
         if (params.businessId != undefined) {
@@ -425,7 +386,7 @@ const StockCell: React.FC = () => {
       hideInForm: true,
       hideInTable: true,
       hideInDescriptions: true,
-      formItemProps: {},
+      formItemProps:{},
       fieldProps: {
         multiple: true,
         onChange: (value: string[]) => {
@@ -450,23 +411,10 @@ const StockCell: React.FC = () => {
           label: 'label',
         },
         //options: cascaderOptions,
-        dependencies: ['businessId'],
+        dependencies:['businessId'],
         showSearch: true,
-      },
-    },
-
-    {
-      title: '所属产权',
-      dataIndex: 'ownershipId',
-      valueType: 'select',
-      hideInForm: true,
-      hideInTable: true,
-      width: 'lg',
-      request:async () => {
-        return handleOptionSelect('OWNERSHIP','CELL');
       }
     },
-
     {
       title: '运营商',
       dataIndex: ['business', 'name'],
@@ -595,10 +543,10 @@ const StockCell: React.FC = () => {
           if (searchStoreIds !== undefined && searchStoreIds !== '') {
             params.searchStoreIds = searchStoreIds;
           }
-          const res = queryStockList({ ...params, category: 'CELL' });
+          const res = queryStockList({ ...params, category: 'CABINET' });
           res.then((value) => {
             params.pageSize = value.total;
-            params.category = 'CELL';
+            params.category = 'CABINET';
             if (searchStoreIds !== undefined && searchStoreIds !== '') {
               params.searchStoreIds = searchStoreIds;
             }
@@ -649,7 +597,7 @@ const StockCell: React.FC = () => {
           );
         }}
         toolBarRender={() => [
-          <Button type="primary" key="primary" size="small" onClick={() => {}}>
+          <Button type="primary" key="primary" size="small" onClick={() => { }}>
             <PlusOutlined /> <FormattedMessage id="pages.new" />
           </Button>,
         ]}
@@ -711,4 +659,4 @@ const StockCell: React.FC = () => {
     </PageContainer>
   );
 };
-export default StockCell;
+export default StockCabinet;

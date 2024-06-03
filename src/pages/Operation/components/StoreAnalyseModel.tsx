@@ -1,9 +1,9 @@
-import { OptionParams, pagination } from '@/pages/Setting/data';
+import { OptionParams } from '@/pages/Setting/data';
 import { queryOptionSelect } from '@/pages/Setting/service';
 import { ActionType } from '@ant-design/pro-components';
 import { ModalForm, ProFormCascader, ProFormDigit, ProFormSelect } from '@ant-design/pro-form';
 import { useIntl } from '@umijs/max';
-import { Divider, message } from 'antd';
+import { Divider, message } from 'antd/lib';
 import { FC, useRef, useState } from 'react';
 
 import { AddressItem, BusinessParams, Pagination, StoreAnalyseItem, StoreParams } from '../data';
@@ -13,7 +13,7 @@ import styles from './style.less';
 
 type StoreAnalyseModelProps = {
   done: boolean;
-  visible: boolean;
+  open: boolean;
   current: Partial<StoreAnalyseItem> | undefined;
   onDone: () => void;
   onSubmit: (values: StoreAnalyseItem) => void;
@@ -21,12 +21,12 @@ type StoreAnalyseModelProps = {
 
 const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
   const actionRef = useRef<ActionType>();
-  const { done, visible, current, onDone, onSubmit } = props;
+  const { done, open, current, onDone, onSubmit } = props;
 
   const [storeId, setStoreId] = useState<number>();
   const intl = useIntl();
 
-  if (!visible) {
+  if (!open) {
     return null;
   }
 
@@ -78,7 +78,6 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
 
   //读取仓库树数据
   const handleStoreTreeSelect = async (businessId?: any) => {
-
     if (businessId == '') {
       return;
     }
@@ -102,10 +101,8 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
     if (key === '') {
       return;
     }
-    const pagination: pagination = {
+    const pagination: Pagination = {
       current: 1,
-      pageSize: 10,
-      total: 100,
     };
     const options: BusinessParams = {
       keywords: keywords,
@@ -131,11 +128,9 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
     return businessListOptions;
   };
 
-  const handleOptionSelect = async (category?: any) => {
-    const pagination: pagination = {
+  const handleOptionSelect = async (optionType: any, category?: any) => {
+    const pagination: Pagination = {
       current: 1,
-      pageSize: 10,
-      total: 100,
     };
     const options: OptionParams = {
       category: category,
@@ -147,19 +142,36 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
       ...options,
     });
 
-    const bandSpecListOptions = [];
-    if (optionData.brandSpec) {
-      for (let i = 0; i < optionData.brandSpec.length; i += 1) {
-        const item = optionData.brandSpec[i];
-        if (item) {
-          bandSpecListOptions.push({
-            label: item.label,
-            value: item.id,
-          });
+    if (optionType == 'OWNERSHIP') {
+      const listOptions = [];
+      if (optionData.ownership) {
+        for (let i = 0; i < optionData.ownership.length; i += 1) {
+          const item = optionData.ownership[i];
+          if (item) {
+            listOptions.push({
+              label: item.label,
+              value: item.id,
+            });
+          }
         }
       }
+      return listOptions;
     }
-    return bandSpecListOptions;
+    if (optionType == 'SPEC') {
+      const listOptions = [];
+      if (optionData.spec) {
+        for (let i = 0; i < optionData.spec.length; i += 1) {
+          const item = optionData.spec[i];
+          if (item) {
+            listOptions.push({
+              label: item.label,
+              value: item.id,
+            });
+          }
+        }
+      }
+      return listOptions;
+    }
   };
 
   const handleChangeStoreId = (value: any) => {
@@ -168,26 +180,23 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
       return;
     }
     setStoreId(value[1]);
-
   };
-
-
-
 
   return (
     <ModalForm<StoreAnalyseItem>
-      visible={visible}
+      open={open}
       title={
         done
           ? null
-          : `${current?.id
-            ? intl.formatMessage({
-              id: 'pages.edit',
-            })
-            : intl.formatMessage({
-              id: 'pages.new',
-            })
-          }`
+          : `${
+              current?.id
+                ? intl.formatMessage({
+                    id: 'pages.edit',
+                  })
+                : intl.formatMessage({
+                    id: 'pages.new',
+                  })
+            }`
       }
       width={640}
       onFinish={async (values) => {
@@ -205,7 +214,7 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
       }}
       modalProps={{
         onCancel: () => onDone(),
-        destroyOnClose: true
+        destroyOnClose: true,
       }}
     >
       <>
@@ -273,9 +282,9 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
           />
 
           <ProFormSelect
-            name="brandSpec"
+            name="ownership"
             width="md"
-            label="选择品牌规格"
+            label="选择产权与品牌"
             showSearch
             rules={[
               {
@@ -287,13 +296,32 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
             }}
             dependencies={['category']}
             request={async (params) => {
-              return handleOptionSelect(params.category);
+              return handleOptionSelect('OWNERSHIP', params.category);
+            }}
+          />
+
+          <ProFormSelect
+            name="spec"
+            width="md"
+            label="规格"
+            showSearch
+            rules={[
+              {
+                required: true,
+              },
+            ]}
+            fieldProps={{
+              labelInValue: true,
+            }}
+            dependencies={['category']}
+            request={async (params) => {
+              return handleOptionSelect('SPEC', params.category);
             }}
           />
 
           <ProFormDigit
             name="total"
-            label="总数量"
+            label="总数量(人工)"
             width="xs"
             rules={[
               {
@@ -301,6 +329,16 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
               },
             ]}
           />
+          {/* <ProFormDigit
+            name="systemTotal"
+            label="总数量(系统)"
+            width="xs"
+            rules={[
+              {
+                required: true,
+              },
+            ]}
+          /> */}
           <ProFormDigit
             name="noneTotal"
             label="正常数量"
@@ -311,6 +349,7 @@ const StoreAnalyseModel: FC<StoreAnalyseModelProps> = (props) => {
               },
             ]}
           />
+
           <ProFormDigit
             name="maintenanceTotal"
             label="维修数量"

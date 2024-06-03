@@ -1,4 +1,4 @@
-import { pagination } from '@/pages/Setting/data';
+import { Pagination } from '@/pages/Setting/data';
 import { ModalForm, ProFormDigit, ProFormSelect, ProFormText } from '@ant-design/pro-form';
 import { useIntl } from '@umijs/max';
 import type { FC } from 'react';
@@ -6,16 +6,16 @@ import { BusinessParams, StoreGroupItem } from '../data';
 import { queryBusinessSelect } from '../service';
 type StoreGroupModelProps = {
   done: boolean;
-  visible: boolean;
+  open: boolean;
   current: Partial<StoreGroupItem> | undefined;
   onDone: () => void;
   onSubmit: (values: StoreGroupItem) => void;
 };
 
 const StoreGroupModel: FC<StoreGroupModelProps> = (props) => {
-  const { done, visible, current, onDone, onSubmit } = props;
+  const { done, open, current, onDone, onSubmit } = props;
   const intl = useIntl();
-  if (!visible) {
+  if (!open) {
     return null;
   }
 
@@ -23,10 +23,8 @@ const StoreGroupModel: FC<StoreGroupModelProps> = (props) => {
     if (key === '') {
       return;
     }
-    const pagination: pagination = {
+    const pagination: Pagination = {
       current: 1,
-      pageSize: 10,
-      total: 100,
     };
     const options: BusinessParams = {
       keywords: keywords,
@@ -54,19 +52,18 @@ const StoreGroupModel: FC<StoreGroupModelProps> = (props) => {
 
   return (
     <ModalForm<StoreGroupItem>
-      visible={visible}
+      open={open}
       title={
         done
           ? null
-          : `${
-              current?.id
-                ? intl.formatMessage({
-                    id: 'pages.edit',
-                  })
-                : intl.formatMessage({
-                    id: 'pages.new',
-                  })
-            }`
+          : `${current?.id
+            ? intl.formatMessage({
+              id: 'pages.edit',
+            })
+            : intl.formatMessage({
+              id: 'pages.new',
+            })
+          }`
       }
       width={640}
       onFinish={async (values) => {
@@ -79,7 +76,6 @@ const StoreGroupModel: FC<StoreGroupModelProps> = (props) => {
       modalProps={{
         onCancel: () => onDone(),
         destroyOnClose: true,
-        bodyStyle: done ? { padding: '72px 0' } : {},
       }}
     >
       <>
@@ -103,24 +99,7 @@ const StoreGroupModel: FC<StoreGroupModelProps> = (props) => {
         />
         <ProFormSelect
           name="useType"
-          label="群组类别"
-          width="md"
-          rules={[
-            {
-              required: true,
-            },
-          ]}
-          placeholder="请选择群组类别"
-          options={[
-            {
-              label: '内部组',
-              value: 'INTERNAL',
-            },
-            {
-              label: '外部组',
-              value: 'EXTERNAL',
-            },
-          ]}
+          hidden
         />
 
         <ProFormText
@@ -163,7 +142,7 @@ const StoreGroupModel: FC<StoreGroupModelProps> = (props) => {
           placeholder="请输入联系电话"
         />
 
-        
+
       </>
     </ModalForm>
   );

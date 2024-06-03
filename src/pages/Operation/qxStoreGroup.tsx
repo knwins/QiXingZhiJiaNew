@@ -3,42 +3,49 @@ import { PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useRequest } from '@umijs/max';
-import { Button, message, Modal } from 'antd';
+import { Button, message, Modal } from 'antd/lib';
 import React, { useRef, useState } from 'react';
-import OptionModel from './components/OptionModel';
-import { OptionItem, OptionParams } from './data';
-import { addOption, queryOptionList, queryOptionSelectMark, removeOption, updateOption } from './service';
+import StoreGroupModel from './components/StoreGroupModel';
+import { StoreGroupItem } from './data';
+import {
+  addStoreGroup,
+  queryBusinessSelect,
+  queryStoreGroupList,
+  removeStoreGroup,
+  updateStoreGroup,
+} from './service';
 
-const Spot: React.FC = () => {
+const StoreGroup: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [done, setDone] = useState<boolean>(false);
-  const [visible, setVisible] = useState<boolean>(false);
-  const [currentRow, setCurrentRow] = useState<OptionItem>();
-  const [params, setParams] = useState<Partial<OptionParams> | undefined>(undefined);
+  const [editView, setEditView] = useState<boolean>(false);
+  const [currentRow, setCurrentRow] = useState<StoreGroupItem>();
 
   //国际化
   const intl = useIntl();
-
+  let roleGroup = localStorage.getItem('roleGroup');
   //读取属性数据
-  const { data: marks } = useRequest(() => {
-    return queryOptionSelectMark({
+  const { data: businessData } = useRequest(() => {
+    return queryBusinessSelect({
       current: 1,
-      pageSize: 100,
-      category: 'CELL',
+      pageSize: 100000,
     });
   });
 
-  const markListOptions = {};
-  if (marks) {
-    marks.map((item) => {
-      markListOptions[item.value] = {
-        text: item.label,
-        value: item.value,
+  const businessListOptions = {};
+  //Execl导出数据使用
+  const businessListData = {};
+  if (businessData) {
+    businessData.map((item) => {
+      businessListOptions[item.id] = {
+        text: item.name,
+        value: item.id,
       };
+      businessListData[item.id] = item.name;
     });
   }
 
-  const handleAction = async (fields: OptionItem) => {
+  const handleAction = async (fields: StoreGroupItem) => {
     const loadingHidde = message.loading(
       intl.formatMessage({
         id: 'pages.tip.loading',
@@ -47,10 +54,9 @@ const Spot: React.FC = () => {
     loadingHidde();
     try {
       if (fields.id != null) {
-        const { success } = await updateOption({
+        const { success } = await updateStoreGroup({
           ...fields,
         });
-
         if (success) {
           message.success(
             intl.formatMessage({
@@ -60,7 +66,7 @@ const Spot: React.FC = () => {
           return true;
         }
       } else {
-        const { success } = await addOption({
+        const { success } = await addStoreGroup({
           ...fields,
         });
         if (success) {
@@ -74,6 +80,7 @@ const Spot: React.FC = () => {
       }
       return false;
     } catch (error) {
+      console.log(error);
       message.error(
         intl.formatMessage({
           id: 'pages.tip.error',
@@ -83,7 +90,7 @@ const Spot: React.FC = () => {
     }
   };
 
-  const handleRemove = (selectedRows: OptionItem) => {
+  const handleRemove = (selectedRows: StoreGroupItem) => {
     Modal.confirm({
       title: intl.formatMessage({
         id: 'pages.tip.title',
@@ -105,17 +112,17 @@ const Spot: React.FC = () => {
               id: 'pages.tip.loading',
             }),
           );
-          const { success } = await removeOption({
+          const { success } = await removeStoreGroup({
             id: selectedRows.id,
           });
 
           if (success) {
             loadingHidde();
             message.success(
-          intl.formatMessage({
-            id: 'pages.tip.success',
-          }),
-        );
+              intl.formatMessage({
+                id: 'pages.tip.success',
+              }),
+            );
             if (actionRef.current) {
               actionRef.current.reload();
             }
@@ -136,7 +143,7 @@ const Spot: React.FC = () => {
 
   const handleDone = () => {
     setDone(false);
-    setVisible(false);
+    setEditView(false);
     setCurrentRow(undefined);
   };
 
@@ -145,36 +152,62 @@ const Spot: React.FC = () => {
     showQuickJumper: true,
   };
 
-  const columns: ProColumns<OptionItem>[] = [
+  const columns: ProColumns<StoreGroupItem>[] = [
     {
-      title: <FormattedMessage id="pages._option.name" />,
+      title: <FormattedMessage id="pages.store.search.keywords" />,
+      dataIndex: 'keywords',
+      hideInForm: true,
+      hideInTable: true,
+      valueType: 'text',
+      fieldProps: {
+        placeholder: '请输入搜索关键字',
+      },
+    },
+    {
+      title: '组名称',
       dataIndex: 'name',
       hideInForm: true,
       hideInSearch: true,
       valueType: 'text',
+      width: 'md',
+      ellipsis: true,
+    },
+    {
+      title: '运营商',
+      dataIndex: ['business', 'name'],
+      valueType: 'text',
+      hideInForm: true,
+      hideInSearch: true,
+      fieldProps: { width: '60px' },
+    },
+    {
+      title: '联系人',
+      dataIndex: 'contactName',
+      valueType: 'text',
+      hideInForm: true,
+      hideInSearch: true,
+      fieldProps: { width: '60px' },
+    },
+    {
+      title: '联系电话',
+      dataIndex: 'contactPhone',
+      copyable: true,
+      valueType: 'text',
+      hideInForm: true,
+      hideInSearch: true,
+      fieldProps: { width: '60px' },
     },
 
     {
-      title: <FormattedMessage id="pages._option.mark" />,
-      dataIndex: 'mark',
+      title: <FormattedMessage id="pages.product.business" />,
+      dataIndex: 'businessId',
       valueType: 'select',
-      valueEnum: markListOptions,
-    },
-    {
-      title: <FormattedMessage id="pages._option.type" />,
-      dataIndex: 'useType',
-      valueType: 'text',
-      valueEnum: {
-        ALL: {
-          text: '通用'
-        },
-        INTERNAL: {
-          text: '内部使用'
-        },
-        EXTERNAL: {
-          text: '外部使用'
-        },
-      },
+      hideInForm: true,
+      fieldProps: { width: '60px' },
+      hideInDescriptions: true,
+      hideInTable: true,
+      valueEnum: businessListOptions,
+      hideInSearch: roleGroup == 'SYSTEM_USER' ? false : true,
     },
 
     {
@@ -188,7 +221,7 @@ const Spot: React.FC = () => {
             key="edit"
             onClick={() => {
               setCurrentRow(record);
-              setVisible(true);
+              setEditView(true);
             }}
           >
             <FormattedMessage id="pages.edit" />
@@ -208,23 +241,29 @@ const Spot: React.FC = () => {
   return (
     <div>
       <PageContainer>
-        <ProTable<OptionItem>
-          headerTitle={intl.formatMessage({
-            id: 'pages._option.title',
-          })}
+        <ProTable<StoreGroupItem>
           actionRef={actionRef}
           rowKey={(record) => record.id}
-          search={{ labelWidth: 80 }}
+          search={{
+            labelWidth: 80,
+          }}
           pagination={paginationProps}
-          params={params}
-          request={queryOptionList}
+          request={(params) => {
+            params.useType='INTERNAL';
+            const res = queryStoreGroupList({ ...params });
+            res.then((value) => {
+              params.pageSize = value.total;
+            });
+            return res;
+          }}
           columns={columns}
           toolBarRender={() => [
             <Button
               type="primary"
               key="primary"
+              size="small"
               onClick={() => {
-                setVisible(true);
+                setEditView(true);
               }}
             >
               <PlusOutlined /> <FormattedMessage id="pages.new" />
@@ -232,15 +271,15 @@ const Spot: React.FC = () => {
           ]}
         />
 
-        <OptionModel
+        <StoreGroupModel
           done={done}
-          visible={visible}
+          open={editView}
           current={currentRow || {}}
           onDone={handleDone}
           onSubmit={async (value) => {
-            const success = await handleAction(value as OptionItem);
+            const success = await handleAction(value as StoreGroupItem);
             if (success) {
-              setVisible(false);
+              setEditView(false);
               setCurrentRow(undefined);
               if (actionRef.current) {
                 actionRef.current.reload();
@@ -252,4 +291,4 @@ const Spot: React.FC = () => {
     </div>
   );
 };
-export default Spot;
+export default StoreGroup;

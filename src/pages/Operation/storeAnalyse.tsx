@@ -13,13 +13,14 @@ import {
   queryStoreAnalyseList,
   queryStoreGroupSelect,
   removeStoreAnalyse,
-  removeStoreAnalyseByIds, updateStoreAnalyse,
+  removeStoreAnalyseByIds,
+  updateStoreAnalyse,
 } from './service';
 
 const StoreAnaylse: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [done, setDone] = useState<boolean>(false);
-  const [visible, setVisible] = useState<boolean>(false);
+  const [editView, setEditView] = useState<boolean>(false);
   const [currentRow, setCurrentRow] = useState<StoreAnalyseItem>();
   const [exportParams, setExportParams] = useState({}); //导出参数
 
@@ -38,7 +39,7 @@ const StoreAnaylse: React.FC = () => {
   //Execl导出数据使用
   const businessListData = {};
   if (businessData) {
-    businessData.map((item) => {
+    businessData.map((item:any) => {
       businessListOptions[item.id] = {
         text: item.label,
         value: item.value,
@@ -59,7 +60,7 @@ const StoreAnaylse: React.FC = () => {
   //Execl导出数据使用
   const storeGroupDataList = {};
   if (storeGroupData) {
-    storeGroupData.map((item) => {
+    storeGroupData.map((item:any) => {
       storeGroupListOptions[item.id] = {
         text: item.name,
         value: item.id,
@@ -167,7 +168,7 @@ const StoreAnaylse: React.FC = () => {
 
   const handleDone = () => {
     setDone(false);
-    setVisible(false);
+    setEditView(false);
     setCurrentRow(undefined);
   };
 
@@ -177,18 +178,6 @@ const StoreAnaylse: React.FC = () => {
   };
 
   const columns: ProColumns<StoreAnalyseItem>[] = [
-
-    {
-      title: <FormattedMessage id="pages.store.search.keywords" />,
-      dataIndex: 'keywords',
-      hideInForm: true,
-      hideInTable: true,
-      valueType: 'text',
-      fieldProps: {
-        placeholder: intl.formatMessage({ id: 'pages.store.search.keywords.placeholder' }),
-      },
-    },
-
     {
       title: <FormattedMessage id="pages.product.business" />,
       dataIndex: 'businessId',
@@ -239,16 +228,33 @@ const StoreAnaylse: React.FC = () => {
     },
 
     {
-      title: '品牌规格',
-      dataIndex: ['brandSpec', 'label'],
+      title: '产权品牌',
+      dataIndex: ['ownership', 'label'],
       valueType: 'text',
       hideInForm: true,
       hideInSearch: true,
       width: 'sm',
     },
     {
-      title: '总数量',
+      title: '规格',
+      dataIndex: ['spec', 'label'],
+      valueType: 'text',
+      hideInForm: true,
+      hideInSearch: true,
+      width: 'sm',
+    },
+
+    {
+      title: '总数量(人工)',
       dataIndex: 'total',
+      valueType: 'digit',
+      hideInForm: true,
+      hideInSearch: true,
+      fieldProps: { width: '60px' },
+    },
+    {
+      title: '总数量(系统)',
+      dataIndex: 'systemTotal',
       valueType: 'digit',
       hideInForm: true,
       hideInSearch: true,
@@ -283,7 +289,7 @@ const StoreAnaylse: React.FC = () => {
             key="edit"
             onClick={() => {
               setCurrentRow(record);
-              setVisible(true);
+              setEditView(true);
             }}
           >
             <FormattedMessage id="pages.edit" />
@@ -303,8 +309,6 @@ const StoreAnaylse: React.FC = () => {
 
   //批量删除数据
   const handleRemoveByIds = (selectedRowKeys: any) => {
-
-
     Modal.confirm({
       title: intl.formatMessage({
         id: 'pages.tip.title',
@@ -376,7 +380,6 @@ const StoreAnaylse: React.FC = () => {
           rowSelection={{
             selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
           }}
-
           tableAlertRender={({ selectedRowKeys, selectedRows, onCleanSelected }) => {
             return (
               <Space size={28}>
@@ -386,8 +389,8 @@ const StoreAnaylse: React.FC = () => {
                     取消选择
                   </a>
                 </span>
-                <span>{`总计数量: ${selectedRows.reduce( (pre, item) => pre + item.total,0,)}`}</span>
-                <span>{`总计维修数量: ${selectedRows.reduce( (pre, item) => pre + item.maintenanceTotal,0,)}`}</span>
+                <span>{`总计数量: ${selectedRows.reduce((pre, item) => pre + item.total, 0)}`}</span>
+                <span>{`总计维修数量: ${selectedRows.reduce((pre, item) => pre + item.maintenanceTotal, 0)}`}</span>
               </Space>
             );
           }}
@@ -423,7 +426,7 @@ const StoreAnaylse: React.FC = () => {
               key="primary"
               size="small"
               onClick={() => {
-                setVisible(true);
+                setEditView(true);
               }}
             >
               <PlusOutlined /> <FormattedMessage id="pages.new" />
@@ -433,13 +436,13 @@ const StoreAnaylse: React.FC = () => {
 
         <StoreAnalyseModel
           done={done}
-          visible={visible}
+          open={editView}
           current={currentRow || {}}
           onDone={handleDone}
           onSubmit={async (value) => {
             const success = await handleAction(value as StoreAnalyseItem);
             if (success) {
-              setVisible(false);
+              setEditView(false);
               setCurrentRow(undefined);
               if (actionRef.current) {
                 actionRef.current.reload();

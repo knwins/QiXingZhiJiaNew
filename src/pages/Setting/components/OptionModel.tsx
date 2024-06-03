@@ -75,7 +75,7 @@ const OptionModel: FC<OptionModelProps> = (props) => {
 
         <Divider/>
         <ProFormSelect
-          name="type"
+          name="useType"
           label="使用类别"
           width="md"
           rules={[

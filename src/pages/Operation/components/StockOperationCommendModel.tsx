@@ -3,29 +3,30 @@ import { queryOptionSelect } from '@/pages/Setting/service';
 import {
   ModalForm,
   ProFormCascader,
-  ProFormDatePicker,
+  ProFormDateTimePicker,
   ProFormDigit,
   ProFormSelect,
   ProFormText,
 } from '@ant-design/pro-form';
-import { Divider, Space, Steps,message } from 'antd/lib';
+import { Divider, Space, Steps, message } from 'antd/lib';
 import { useState, type FC } from 'react';
 import { BusinessParams, Pagination, StockOperationItem, StoreParams } from '../data';
 import { queryBusinessSelect, queryStoreTreeSelect } from '../service';
 import styles from './style.less';
+import { values } from 'lodash';
 
 type StockOperationCommendModelProps = {
   done: boolean;
-  visible: boolean;
+  open: boolean;
   current: Partial<StockOperationItem> | undefined;
   onDone: () => void;
   onSubmit: (values: StockOperationItem) => void;
 };
 
 const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) => {
-  const { done, visible, current, onDone, onSubmit } = props;
+  const { done, open, current, onDone, onSubmit } = props;
   const [toStoreId, setToStoreId] = useState<number>();
-  if (!visible) {
+  if (!open) {
     return null;
   }
 
@@ -46,7 +47,6 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
       ...pagination,
       ...options,
     });
-
     return storeTreeData;
   };
 
@@ -66,8 +66,15 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
       ...options,
     });
 
+
     const businessListOptions = [];
     if (businessData) {
+      if (current?.operationType === 'BATCH') {
+        businessListOptions.push({
+          label: '不修改运营商',
+          value: 'UNEDIT',
+        });
+      }
       for (let i = 0; i < businessData.length; i += 1) {
         const item = businessData[i];
         if (item) {
@@ -78,14 +85,13 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
         }
       }
     }
+    console.log(businessListOptions);
     return businessListOptions;
   };
 
   const handleOptionSelect = async (category?: any) => {
     const pagination: Pagination = {
-      current: 1,
-      pageSize: 10,
-      total: 100,
+      current: 1
     };
     const options: OptionParams = {
       category: category,
@@ -99,6 +105,13 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
 
     const ownershipListOptions = [];
     if (optionData.ownership) {
+
+      if (current?.operationType === 'BATCH') {
+        ownershipListOptions.push({
+          label: '不修改产权与品牌',
+          value: 'UNEDIT',
+        });
+      }
       for (let i = 0; i < optionData.ownership.length; i += 1) {
         const item = optionData.ownership[i];
         if (item) {
@@ -122,18 +135,17 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
 
   return (
     <ModalForm<StockOperationItem>
-      visible={visible}
+      open={open}
       title="调度操作流程"
       width={740}
       initialValues={current}
       modalProps={{
         onCancel: () => onDone(),
         destroyOnClose: true,
-        bodyStyle: done ? { padding: '72px 0' } : {},
       }}
       onFinish={async (values) => {
         values.toStoreId = toStoreId;
-        values.storeId_ = undefined;
+        values.storeId_ = undefined;//使用是防止提交storeId_
         onSubmit(values);
       }}
       //
@@ -146,7 +158,7 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
         <Divider />
         <ProFormDigit name="id" hidden />
         <Steps
-          current={current.state === 'DONE' ? 2 : current.state === 'SYNC_MINIPROGRAM' ? 1 : 0}
+          current={current?.state === 'DONE' ? 2 : current?.state === 'SYNC_MINIPROGRAM' ? 1 : 0}
           className={styles.steps}
           items={[
             {
@@ -164,10 +176,10 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
           ]}
         />
 
-        {current.operationType == 'IN_STORE' && (
+        {current?.operationType == 'IN_STORE' && (
           <>
             <Divider orientation="left">入库数据</Divider>
-            <Space direction="vertical" size="small" style={{ padding: '0 40px' }}>
+            <div style={{ padding: '0 40px' }}>
               <ProFormText name="category" hidden />
               <ProFormText name="operationType" hidden />
               <ProFormText
@@ -228,12 +240,12 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
                     label: 'label',
                   },
                 }}
-                dependencies={['business']}
+                dependencies={['toBusiness']}
                 request={async (params) => {
-                  if (params.business !== undefined) {
-                    return handleStoreTreeSelect(params.business.value);
+                  if (params.toBusiness !== undefined) {
+                    return handleStoreTreeSelect(params.toBusiness.value);
                   }
-                  return handleStoreTreeSelect(current?.business?.value);
+                  return handleStoreTreeSelect(current?.toBusiness?.value);
                 }}
               />
 
@@ -248,76 +260,175 @@ const StockOperationCommendModel: FC<StockOperationCommendModelProps> = (props) 
                 ]}
                 placeholder="请输入供应商名称"
               />
-              <ProFormDatePicker name="toCreateTime" colProps={{ xl: 8, md: 12 }} label="入库日期" />
-            </Space>
+              <ProFormDateTimePicker name="toCreateTime" colProps={{ xl: 8, md: 12 }} label="入库日期" />
+            </div>
           </>
         )}
 
-        {current.operationType == 'OUT_STORE' && <>出库操作样式</>}
+        {current?.operationType == 'BATCH' && <>
 
-        {current.operationType == 'STORE_TO_STORE' && (
+          <Divider orientation="left">编号文件</Divider>
+          <Space size="small" style={{ padding: '0 40px' }}>
+            <ProFormText name="fileUrl" readonly />
+          </Space>
+
+          <Divider orientation="left">批量修改</Divider>
+          <Space direction="vertical" size="small" style={{ padding: '0 40px' }}>
+            <ProFormText name="operationType" hidden />
+            <ProFormSelect
+              name="toBusiness"
+              label="新运营商"
+              width="md"
+              initialValue={{ "label": "不修改运营商", "value": "UNEDIT" }}
+              showSearch
+
+              fieldProps={{
+                labelInValue: true,
+              }}
+              request={async (params) => {
+                return handleBusinessSelect(params.keyWords);
+              }}
+            />
+
+            <ProFormCascader
+              name="storeId_"
+              label="新站点"
+              width="md"
+              fieldProps={{
+                onChange: handleChangeStoreId,
+                fieldNames: {
+                  children: 'children',
+                  label: 'label',
+                },
+              }}
+              dependencies={['toBusiness']}
+              request={async (params: any) => {
+                if (params.toBusiness !== undefined) {
+                  return handleStoreTreeSelect(params.toBusiness.value);
+                }
+                return handleStoreTreeSelect(current?.toBusiness?.value);
+              }}
+            />
+            <ProFormSelect
+              name="ownership"
+              width="md"
+              label="新产权与品牌"
+              initialValue={{ "label": "不修改产权与品牌", "value": "UNEDIT" }}
+              showSearch
+              fieldProps={{
+                labelInValue: true,
+              }}
+              request={async (params) => {
+                return handleOptionSelect(current?.category);
+              }}
+            />
+
+
+
+            <ProFormSelect
+              name="stockState"
+              width="sm"
+              initialValue="UNEDIT"
+              label="状态"
+              options={[
+                { label: '不修改状态', value: 'UNEDIT' },
+                { label: '正常', value: 'NORMAL' },
+                { label: '异常', value: 'ABNORMAL' },
+                { label: '丢失', value: 'LOSS' },
+                { label: '维修', value: 'MAINTENANCE' },
+                { label: '调拨中', value: 'STORETOSTORE' },
+              ]}
+            />
+            <ProFormDateTimePicker
+              name="toCreateTime"
+              colProps={{ xl: 8, md: 12 }}
+              label="选择日期"
+            />
+          </Space>
+        </>}
+
+        {current?.operationType == 'STORE_TO_STORE' && (
           <>
-            <>
-              <Divider orientation="left">调拨数据</Divider>
-              <Space direction="vertical" size="small" style={{ padding: '0 40px' }}>
-                <ProFormText name="category" hidden />
-                <ProFormText name="operationType" hidden />
-                <ProFormText
-                  name="fileUrl"
-                  label="编号文件"
-                  readonly
-                  tooltip="请确保操作编号和文件一致"
-                />
-                <ProFormSelect
-                  name="toBusiness"
-                  label="调入运营商"
-                  width="md"
-                  showSearch
-                  rules={[
-                    {
-                      required: true,
-                    },
-                  ]}
-                  fieldProps={{
-                    labelInValue: true,
-                  }}
-                  request={async (params) => {
-                    return handleBusinessSelect(params.keyWords);
-                  }}
-                />
+            <Divider orientation="left">调拨数据</Divider>
+            <Space direction="vertical" size="small" style={{ padding: '0 40px' }}>
+              <ProFormText name="category" hidden />
+              <ProFormText name="operationType" hidden />
+              <ProFormText
+                name="fileUrl"
+                label="编号文件"
+                readonly
+                tooltip="请确保操作编号和文件一致"
+              />
+              <ProFormSelect
+                name="toBusiness"
+                label="调入运营商"
+                width="md"
+                showSearch
+                rules={[
+                  {
+                    required: true,
+                  },
+                ]}
+                fieldProps={{
+                  labelInValue: true,
+                }}
+                request={async (params) => {
+                  return handleBusinessSelect(params.keyWords);
+                }}
+              />
 
-                <ProFormCascader
-                  name="storeId_"
-                  label="调入运营商站点"
-                  width="md"
-                  rules={[
-                    {
-                      required: true,
-                    },
-                  ]}
-                  fieldProps={{
-                    onChange: handleChangeStoreId,
-                    fieldNames: {
-                      children: 'children',
-                      label: 'label',
-                    },
-                  }}
-                  dependencies={['business']}
-                  request={async (params) => {
-                    if (params.business !== undefined) {
-                      return handleStoreTreeSelect(params.business.value);
-                    }
-                    return handleStoreTreeSelect(current?.business?.value);
-                  }}
-                />
+              <ProFormCascader
+                name="storeId_"
+                label="调入运营商站点"
+                width="md"
+                rules={[
+                  {
+                    required: true,
+                  },
+                ]}
+                fieldProps={{
+                  onChange: handleChangeStoreId,
+                  fieldNames: {
+                    children: 'children',
+                    label: 'label',
+                  },
+                }}
+                dependencies={['toBusiness']}
+                request={async (params) => {
+                  if (params.toBusiness !== undefined) {
+                    return handleStoreTreeSelect(params.toBusiness.value);
+                  }
+                  return handleStoreTreeSelect(current?.toBusiness?.value);
+                }}
+              />
 
-                <ProFormDatePicker
-                  name="createTime"
-                  colProps={{ xl: 8, md: 12 }}
-                  label="调入日期"
-                />
-              </Space>
-            </>
+
+
+              <ProFormSelect
+                name="ownership"
+                width="lg"
+                label="产权与品牌"
+                showSearch
+                rules={[
+                  {
+                    required: true,
+                  },
+                ]}
+                fieldProps={{
+                  labelInValue: true,
+                }}
+                request={async (params) => {
+                  return handleOptionSelect(current?.category);
+                }}
+              />
+
+
+              <ProFormDateTimePicker
+                name="toCreateTime"
+                colProps={{ xl: 8, md: 12 }}
+                label="选择日期"
+              />
+            </Space>
           </>
         )}
       </>

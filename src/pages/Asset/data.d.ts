@@ -1,8 +1,8 @@
 import { BusinessItem } from '../Operation/data';
+import { UserItem } from '../Setting/data';
 
 export type Pagination = {
-  total?: number;
-  pageSize: number;
+  pageSize?: number;
   current: number;
 };
 
@@ -10,6 +10,7 @@ export type Pagination = {
 export type StockItem = {
   id: string;
   number: number;
+  gpsNumber:number;
   category: string;
   state?: string;
   quantity?: string;
@@ -20,7 +21,7 @@ export type StockItem = {
   store: StoreItem;
   label?: string;
   value?: string;
-  searchStoreIds?:string;
+  searchStoreIds?: string;
 };
 
 export type StockParams = {
@@ -29,6 +30,20 @@ export type StockParams = {
   sorter?: Record<string, any>;
 } & Partial<StockItem>;
 
+export type StockLogItem = {
+  id: string;
+  stock: StockItem;
+  user?: UserItem;
+  content?: string;
+  createTime: Date;
+};
+
+export type StockLogParams = {
+  pageSize?: number;
+  stockId?: string;
+  filter?: Record<string, any[]>;
+  sorter?: Record<string, any>;
+} & Partial<StockLogItem>;
 
 export type ProductItem = {
   id: string;
@@ -38,7 +53,7 @@ export type ProductItem = {
   business: BusinessItem; //运营商
   spec: OptionItem; //型号
   size: string;
-  abnormalDays:string;
+  abnormalDays: string;
   weight: string;
   material: string;
   updateTime?: Date;
@@ -56,7 +71,7 @@ export type ProductItem = {
   gpsAddress?: string;
   label?: string;
   value?: string;
-  searchStoreIds?:string;
+  searchStoreIds?: string;
 };
 
 export type ProductParams = {

@@ -1,7 +1,13 @@
 import { OptionParams, pagination } from '@/pages/Setting/data';
 import { queryOptionSelect } from '@/pages/Setting/service';
 import { ActionType } from '@ant-design/pro-components';
-import { ModalForm, ProFormDigit, ProFormSelect, ProFormUploadButton,ProFormText  } from '@ant-design/pro-form';
+import {
+  ModalForm,
+  ProFormDigit,
+  ProFormSelect,
+  ProFormText,
+  ProFormUploadButton,
+} from '@ant-design/pro-form';
 import { useIntl } from '@umijs/max';
 import { Divider, message, Upload } from 'antd/lib';
 import { FC, useRef, useState } from 'react';
@@ -13,7 +19,7 @@ import styles from './style.less';
 
 type StockOperationModelProps = {
   done: boolean;
-  visible: boolean;
+  open: boolean;
   current: Partial<StockOperationItem> | undefined;
   onDone: () => void;
   onSubmit: (values: StockOperationItem) => void;
@@ -21,13 +27,13 @@ type StockOperationModelProps = {
 
 const StockOperationModel: FC<StockOperationModelProps> = (props) => {
   const actionRef = useRef<ActionType>();
-  const { done, visible, current, onDone, onSubmit } = props;
+  const { done, open, current, onDone, onSubmit } = props;
 
   const [fileUrl, setFileUrl] = useState('');
   const uploadFileURL = 'https://qixingzhijia.szqws.com:8081/api/file/upload_file';
 
   const intl = useIntl();
-  if (!visible) {
+  if (!open) {
     return null;
   }
 
@@ -105,7 +111,6 @@ const StockOperationModel: FC<StockOperationModelProps> = (props) => {
     const pagination: pagination = {
       current: 1,
       pageSize: 10,
-      total: 100,
     };
     const options: BusinessParams = {
       keywords: keywords,
@@ -135,7 +140,6 @@ const StockOperationModel: FC<StockOperationModelProps> = (props) => {
     const pagination: pagination = {
       current: 1,
       pageSize: 10,
-      total: 100,
     };
     const options: OptionParams = {
       category: category,
@@ -197,19 +201,18 @@ const StockOperationModel: FC<StockOperationModelProps> = (props) => {
 
   return (
     <ModalForm<StockOperationItem>
-      visible={visible}
+      open={open}
       title={
         done
           ? null
-          : `${
-              current?.id
-                ? intl.formatMessage({
-                    id: 'pages.edit',
-                  })
-                : intl.formatMessage({
-                    id: 'pages.new',
-                  })
-            }`
+          : `${current?.id
+            ? intl.formatMessage({
+              id: 'pages.edit',
+            })
+            : intl.formatMessage({
+              id: 'pages.new',
+            })
+          }`
       }
       width={640}
       onFinish={async (values) => {
@@ -253,12 +256,14 @@ const StockOperationModel: FC<StockOperationModelProps> = (props) => {
               { label: '入库', value: 'IN_STORE' },
               { label: '出库', value: 'OUT_STORE' },
               { label: '调拨', value: 'STORE_TO_STORE' },
+              { label: '批量', value: 'BATCH' },
+              { label: '其他', value: 'OTHER' },
             ]}
           />
 
           <ProFormSelect
             name="business"
-            label="运营商"
+            label="所属运营商"
             width="md"
             showSearch
             rules={[
@@ -272,7 +277,9 @@ const StockOperationModel: FC<StockOperationModelProps> = (props) => {
             request={async (params) => {
               return handleBusinessSelect(params.keyWords);
             }}
+            
           />
+          
           <ProFormSelect
             name="category"
             width="md"
@@ -302,6 +309,13 @@ const StockOperationModel: FC<StockOperationModelProps> = (props) => {
             onChange={handleChange}
             max={1}
             title="上传"
+          />
+
+          <ProFormDigit
+            name="quantity"
+            label="数量"
+            width="xs"
+            hidden={current?.id ? false : true}
           />
         </div>
       </>

@@ -76,21 +76,12 @@ export default [
         path: '/asset',
         redirect: '/asset/cell',
       },
-
       {
         name: 'cell',
         icon: 'smile',
         path: '/asset/cell',
         component: './Asset/cell',
       },
-
-      {
-        name: 'stockCell',
-        icon: 'smile',
-        path: '/asset/stockCell',
-        component: './Asset/stockCell',
-      },
-
       {
         name: 'cabinet',
         icon: 'smile',
@@ -129,6 +120,64 @@ export default [
   },
 
   {
+    path: '/qixing',
+    name: 'qixing',
+    icon: 'user',
+    routes: [
+      {
+        path: '/qixing/iasset',
+        redirect: '/iasset/stockCell',
+      },
+
+      {
+        name: 'stockCell',
+        icon: 'smile',
+        path: '/qixing/iasset/stockCell',
+        component: './Asset/stockCell',
+      },
+      {
+        name: 'stockCabinet',
+        icon: 'smile',
+        path: '/qixing/iasset/stockCabinet',
+        component: './Asset/stockCabinet',
+      },
+
+
+      {
+        name: 'storeAnalyse',
+        icon: 'smile',
+        path: '/qixing/ioperation/storeAnalyse',
+        component: './Operation/storeAnalyse',
+      },
+
+
+      {
+        name: 'stockOperation',
+        icon: 'smile',
+        path: '/qixing/ioperation/stockOperation',
+        component: './Operation/stockOperation',
+      },
+      {
+        name: 'storeGroup',
+        icon: 'smile',
+        path: '/qixing/ioperation/storeGroup',
+        component: './Operation/qxStoreGroup',
+      },
+
+      {
+        name: 'store',
+        icon: 'smile',
+        path: '/qixing/ioperation/store',
+        component: './Operation/qxStore',
+      },
+
+      
+
+    ],
+  },
+
+
+  {
     path: '/operation',
     name: 'operation',
     icon: 'user',
@@ -144,12 +193,7 @@ export default [
         path: '/operation/store',
         component: './Operation/store',
       },
-      {
-        name: 'storeAnalyse',
-        icon: 'smile',
-        path: '/operation/storeAnalyse',
-        component: './Operation/storeAnalyse',
-      },
+      
       {
         name: 'storeGroup',
         icon: 'smile',
@@ -157,12 +201,7 @@ export default [
         component: './Operation/storeGroup',
       },
 
-      {
-        name: 'stockOperation',
-        icon: 'smile',
-        path: '/operation/stockOperation',
-        component: './Operation/stockOperation',
-      },
+    
       {
         name: 'check',
         icon: 'smile',

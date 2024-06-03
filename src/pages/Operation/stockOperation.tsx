@@ -3,11 +3,12 @@ import { PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useRequest } from '@umijs/max';
-import { Button, message, Modal, Space, Table } from 'antd';
+import { Button, message, Modal, Space, Table } from 'antd/lib';
 import React, { useRef, useState } from 'react';
 import StockOperationCommendModel from './components/StockOperationCommendModel';
 import StockOperationDetailModel from './components/StockOperationDetailModel';
 import StockOperationModel from './components/StockOperationModel';
+import StockOperationSyncModel from './components/StockOperationSyncModel';
 
 import { StockOperationItem } from './data';
 import {
@@ -23,11 +24,12 @@ import {
 const StockOperation: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [done, setDone] = useState<boolean>(false);
-  const [visible, setVisible] = useState<boolean>(false);
   const [currentRow, setCurrentRow] = useState<StockOperationItem>();
   const [exportParams, setExportParams] = useState({}); //导出参数
+  const [editView, setEditView] = useState<boolean>(false);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [showStockOperationCommend, setShowStockOperationCommend] = useState<boolean>(false);
+  const [showStockOperationSync, setShowStockOperationSync] = useState<boolean>(false);
 
   //国际化
   const intl = useIntl();
@@ -54,28 +56,14 @@ const StockOperation: React.FC = () => {
   }
 
   const handleCommendAction = async (fields: StockOperationItem) => {
-    const loadingHidde = message.loading(
+    message.loading(
       intl.formatMessage({
         id: 'pages.tip.loading',
       }),
     );
-    loadingHidde();
     try {
-      if (fields.operationType != undefined && fields.operationType === 'IN_STORE') {
+      if (fields.operationType != undefined) {
         const { success } = await updateStockOperationCommend({
-          ...fields,
-        });
-
-        if (success) {
-          message.success(
-            intl.formatMessage({
-              id: 'pages.tip.success',
-            }),
-          );
-          return true;
-        }
-      } else {
-        const { success } = await addStockOperation({
           ...fields,
         });
         if (success) {
@@ -100,12 +88,11 @@ const StockOperation: React.FC = () => {
   };
 
   const handleAction = async (fields: StockOperationItem) => {
-    const loadingHidde = message.loading(
+    message.loading(
       intl.formatMessage({
         id: 'pages.tip.loading',
       }),
     );
-    loadingHidde();
     try {
       if (fields.id != null) {
         const { success } = await updateStockOperation({
@@ -135,7 +122,6 @@ const StockOperation: React.FC = () => {
       }
       return false;
     } catch (error) {
-      console.log(error);
       message.error(
         intl.formatMessage({
           id: 'pages.tip.error',
@@ -146,6 +132,12 @@ const StockOperation: React.FC = () => {
   };
 
   const handleRemove = (selectedRows: StockOperationItem) => {
+    message.loading(
+      intl.formatMessage({
+        id: 'pages.tip.loading',
+      }),
+    );
+
     Modal.confirm({
       title: intl.formatMessage({
         id: 'pages.tip.title',
@@ -162,17 +154,10 @@ const StockOperation: React.FC = () => {
       onOk: async () => {
         if (!selectedRows) return true;
         try {
-          const loadingHidde = message.loading(
-            intl.formatMessage({
-              id: 'pages.tip.loading',
-            }),
-          );
           const { success } = await removeStockOperation({
             id: selectedRows.id,
           });
-
           if (success) {
-            loadingHidde();
             message.success(
               intl.formatMessage({
                 id: 'pages.tip.success',
@@ -198,10 +183,11 @@ const StockOperation: React.FC = () => {
 
   const handleDone = () => {
     setDone(false);
-    setVisible(false);
+    setEditView(false);
     setCurrentRow(undefined);
     setShowStockOperationCommend(false);
     setShowDetail(false);
+    setShowStockOperationSync(false);
   };
 
   const paginationProps = {
@@ -235,6 +221,14 @@ const StockOperation: React.FC = () => {
     },
 
     {
+      title: <FormattedMessage id="pages.create.time" />,
+      dataIndex: 'createTime',
+      valueType: 'dateTime',
+      align: 'center',
+      width: 'sm',
+      hideInSearch: true,
+    },
+    {
       title: '操作名称',
       dataIndex: 'name',
       valueType: 'text',
@@ -260,6 +254,9 @@ const StockOperation: React.FC = () => {
         STORE_TO_STORE: {
           text: '调拨',
         },
+        BATCH: {
+          text: '批量',
+        },
         OTHER: {
           text: '其他',
         },
@@ -267,7 +264,7 @@ const StockOperation: React.FC = () => {
     },
 
     {
-      title: '运营商',
+      title: '所属运营商',
       dataIndex: ['business', 'label'],
       valueType: 'select',
       hideInForm: true,
@@ -314,22 +311,7 @@ const StockOperation: React.FC = () => {
       fieldProps: { width: '60px' },
     },
 
-    {
-      title: '备注',
-      dataIndex: 'remarks',
-      valueType: 'text',
-      hideInForm: true,
-      hideInSearch: true,
-      fieldProps: { width: '60px' },
-    },
-    {
-      title: '操作命令',
-      dataIndex: 'operationCommend',
-      valueType: 'text',
-      hideInForm: true,
-      hideInTable: true,
-      hideInSearch: true,
-    },
+
 
     {
       title: '状态',
@@ -347,7 +329,6 @@ const StockOperation: React.FC = () => {
         DONE: {
           text: '完成',
         },
-       
       },
     },
     {
@@ -364,9 +345,15 @@ const StockOperation: React.FC = () => {
               if (record.state === 'COMMAND_WRITE') {
                 setCurrentRow(record);
                 setShowStockOperationCommend(true);
-              }else if(record.state === 'SYNC_MINIPROGRAM' || record.state === 'DONE'){
+                return;
+              } else if (record.state === 'DONE') {
                 setCurrentRow(record);
                 setShowDetail(true);
+                return;
+              } else if (record.state === 'SYNC_MINIPROGRAM') {
+                setCurrentRow(record);
+                setShowStockOperationSync(true);
+                return;
               }
             }}
           >
@@ -377,7 +364,7 @@ const StockOperation: React.FC = () => {
             key="edit"
             onClick={() => {
               setCurrentRow(record);
-              setVisible(true);
+              setEditView(true);
             }}
           >
             <FormattedMessage id="pages.edit" />
@@ -478,6 +465,7 @@ const StockOperation: React.FC = () => {
                     取消选择
                   </a>
                 </span>
+                <span>{`总计数量: ${selectedRows.reduce((pre, item) => pre + item.quantity, 0)}`}</span>
               </Space>
             );
           }}
@@ -487,7 +475,7 @@ const StockOperation: React.FC = () => {
               key="primary"
               size="small"
               onClick={() => {
-                setVisible(true);
+                setEditView(true);
               }}
             >
               <PlusOutlined /> 新增编号文件
@@ -497,7 +485,7 @@ const StockOperation: React.FC = () => {
 
         <StockOperationCommendModel
           done={done}
-          visible={showStockOperationCommend}
+          open={showStockOperationCommend}
           current={currentRow || {}}
           onDone={handleDone}
           onSubmit={async (value) => {
@@ -514,13 +502,14 @@ const StockOperation: React.FC = () => {
 
         <StockOperationModel
           done={done}
-          visible={visible}
+          open={editView}
           current={currentRow || {}}
           onDone={handleDone}
           onSubmit={async (value) => {
+            console.log('StockOperationModel');
             const success = await handleAction(value as StockOperationItem);
             if (success) {
-              setVisible(false);
+              setEditView(false);
               setCurrentRow(undefined);
               if (actionRef.current) {
                 actionRef.current.reload();
@@ -530,15 +519,20 @@ const StockOperation: React.FC = () => {
         />
 
         <StockOperationDetailModel
+          open={showDetail}
+          current={currentRow || {}}
+          onDone={handleDone}
+        />
+
+        <StockOperationSyncModel
           done={done}
-          visible={showDetail}
+          open={showStockOperationSync}
           current={currentRow || {}}
           onDone={handleDone}
           onSubmit={async (value) => {
             const success = await handleAction(value as StockOperationItem);
             if (success) {
-              setVisible(false);
-              setCurrentRow(undefined);
+              setShowStockOperationSync(false);
               if (actionRef.current) {
                 actionRef.current.reload();
               }

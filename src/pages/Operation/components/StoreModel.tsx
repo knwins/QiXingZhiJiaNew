@@ -1,4 +1,3 @@
-import { pagination } from '@/pages/Setting/data';
 import AddressModel from '@/pages/User/components/AddressModel';
 import { ActionType } from '@ant-design/pro-components';
 import ProForm, { ModalForm, ProFormDigit, ProFormSelect, ProFormText } from '@ant-design/pro-form';
@@ -6,7 +5,14 @@ import { useIntl } from '@umijs/max';
 import { Button, Divider, message } from 'antd';
 import { FC, useRef, useState } from 'react';
 
-import { AddressItem, AddressParams, BusinessParams, Pagination, StoreGroupParams, StoreItem } from '../data';
+import {
+  AddressItem,
+  AddressParams,
+  BusinessParams,
+  Pagination,
+  StoreGroupParams,
+  StoreItem,
+} from '../data';
 import {
   addAddress,
   queryAddressSelect,
@@ -16,11 +22,10 @@ import {
 } from '../service';
 
 import styles from './style.less';
-import config from 'config/config';
 
 type StoreModelProps = {
   done: boolean;
-  visible: boolean;
+  open: boolean;
   current: Partial<StoreItem> | undefined;
   onDone: () => void;
   onSubmit: (values: StoreItem) => void;
@@ -28,11 +33,11 @@ type StoreModelProps = {
 
 const StoreModel: FC<StoreModelProps> = (props) => {
   const actionRef = useRef<ActionType>();
-  const { done, visible, current, onDone, onSubmit } = props;
+  const { done, open, current, onDone, onSubmit } = props;
   const [addressVisible, setAddressVisible] = useState<boolean>(false);
   const intl = useIntl();
 
-  if (!visible) {
+  if (!open) {
     return null;
   }
 
@@ -41,17 +46,12 @@ const StoreModel: FC<StoreModelProps> = (props) => {
   };
 
   const handleStoreGroupSelect = async (businessId?: any, useType?: any, keywords?: any) => {
-
     if (businessId === '') {
       return;
     }
     const pagination: Pagination = {
       current: 1,
-      pageSize: 100,
     };
-
-    console.log(useType);
-
     const options: StoreGroupParams = {
       businessId: businessId,
       useType: useType,
@@ -77,10 +77,8 @@ const StoreModel: FC<StoreModelProps> = (props) => {
   };
 
   const handleAddressSelect = async (keywords?: any) => {
-    const pagination: pagination = {
+    const pagination: Pagination = {
       current: 1,
-      pageSize: 50,
-      total: 100,
     };
     const options: AddressParams = {
       keywords: keywords,
@@ -154,10 +152,8 @@ const StoreModel: FC<StoreModelProps> = (props) => {
     if (key === '') {
       return;
     }
-    const pagination: pagination = {
+    const pagination: Pagination = {
       current: 1,
-      pageSize: 10,
-      total: 100,
     };
     const options: BusinessParams = {
       keywords: keywords,
@@ -185,7 +181,7 @@ const StoreModel: FC<StoreModelProps> = (props) => {
 
   return (
     <ModalForm<StoreItem>
-      visible={visible}
+      open={open}
       title={
         done
           ? null
@@ -216,7 +212,6 @@ const StoreModel: FC<StoreModelProps> = (props) => {
           <Divider />
           <ProFormDigit name="id" hidden />
 
-
           <ProFormSelect
             name="business"
             label="选择运营商"
@@ -235,27 +230,9 @@ const StoreModel: FC<StoreModelProps> = (props) => {
             }}
           />
 
-
           <ProFormSelect
             name="useType"
-            label="使用分类"
-            width="md"
-            rules={[
-              {
-                required: true,
-              },
-            ]}
-            placeholder="请选择使用分类"
-            options={[
-              {
-                label: '内部使用',
-                value: 'INTERNAL',
-              },
-              {
-                label: '外部使用',
-                value: 'EXTERNAL',
-              },
-            ]}
+             hidden
           />
 
           <ProFormSelect
@@ -385,9 +362,33 @@ const StoreModel: FC<StoreModelProps> = (props) => {
             </Button>
           </ProForm.Group>
 
+          <ProFormText
+            name="contactName"
+            label="联系人"
+            width="md"
+            rules={[
+              {
+                required: true,
+              },
+            ]}
+            placeholder="请输入联系人"
+          />
+
+          <ProFormText
+            name="contactPhone"
+            label="联系电话"
+            width="md"
+            rules={[
+              {
+                required: true,
+              },
+            ]}
+            placeholder="请输入联系电话"
+          />
+
           <AddressModel
             done={done}
-            visible={addressVisible}
+            open={addressVisible}
             onDone={handleDone}
             onSubmit={async (value) => {
               const success = await handleAction(value as AddressItem);

@@ -512,7 +512,7 @@ export async function queryStockLogList(
   params: {
     current?: number;
     pageSize?: number;
-    mark?: string;
+    stockId: string;
   },
   options?: { [key: string]: any },
 ) {

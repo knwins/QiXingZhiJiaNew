@@ -472,6 +472,7 @@ export async function queryStoreTreeSelect(
     current?: number;
     pageSize?: number;
     useType?: string;
+    businessId?:string;
   },
   options?: { [key: string]: any },
 ) {

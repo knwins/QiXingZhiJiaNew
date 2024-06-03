@@ -10,12 +10,10 @@ import { StoreGroupParams, StoreItem, Pagination } from './data';
 import {
   addStore,
   queryBusinessSelect,
-  queryStoreGroupList,
   queryStoreGroupSelect,
   queryStoreList,
   removeStore,
   removeStoreByIds,
-  syncFNJStoreList,
   updateStore,
 } from './service';
 
@@ -64,7 +62,7 @@ const QXStore: React.FC = () => {
     };
     const options: StoreGroupParams = {
       businessId: businessId,
-      useType:'EXTERNAL',
+      useType: 'INTERNAL',
     };
 
     //读取仓库数据
@@ -75,35 +73,28 @@ const QXStore: React.FC = () => {
     return storeGroupData;
   };
 
-   
-  const handleSyncFNJStore = async () => {
-    const loadingHidde = message.loading(
-      intl.formatMessage({
-        id: 'pages.tip.loading',
-      }),
-    );
+  // //读取属性数据
+  // const { data: storeGroupData } = useRequest(() => {
+  //   return queryStoreGroupSelect({
+  //     current: 1,
+  //     pageSize: 100000,
+  //   });
+  // });
 
-    try {
-      const { success, data } = await syncFNJStoreList({
-        businessId: 1,
-      });
-      if (success) {
-        loadingHidde();
-        message.success(data);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.log(error);
-      message.error(
-        intl.formatMessage({
-          id: 'pages.tip.error',
-        }),
-      );
-      return false;
-    }
-  };
+  // const storeGroupListOptions = {};
+  // //Execl导出数据使用
+  // const storeGroupDataList = {};
+  // if (storeGroupData) {
+  //   storeGroupData.map((item) => {
+  //     storeGroupListOptions[item.id] = {
+  //       text: item.name,
+  //       value: item.id,
+  //     };
+  //     storeGroupDataList[item.id] = item.name;
+  //   });
+  // }
 
+  
   const handleAction = async (fields: StoreItem) => {
     const loadingHidde = message.loading(
       intl.formatMessage({
@@ -300,24 +291,6 @@ const QXStore: React.FC = () => {
       },
     },
 
-    // {
-    //   title: '使用分类',
-    //   dataIndex: 'useType',
-    //   valueType: 'text',
-    //   hideInForm: true,
-    //   width: 'sm',
-    //   valueEnum: {
-    //     INTERNAL: {
-    //       text: '内部使用',
-    //       type: 'INTERNAL',
-    //     },
-    //     EXTERNAL: {
-    //       text: '外部使用',
-    //       type: 'EXTERNAL',
-    //     },
-    //   },
-    // },
-
     {
       title: <FormattedMessage id="pages.store.state" />,
       dataIndex: 'state',
@@ -366,7 +339,7 @@ const QXStore: React.FC = () => {
   ];
 
   //批量删除数据
-  const handleRemoveByIds = (selectedRowKeys: any) => {
+  const handleRemoveByIds = (selectedRowKeys: any,onCleanSelected:any) => {
     Modal.confirm({
       title: intl.formatMessage({
         id: 'pages.tip.title',
@@ -381,7 +354,6 @@ const QXStore: React.FC = () => {
         id: 'pages.tip.cancel',
       }),
       onOk: async () => {
-
         try {
           const loadingHidde = message.loading(
             intl.formatMessage({
@@ -391,7 +363,6 @@ const QXStore: React.FC = () => {
           const { success } = await removeStoreByIds({
             ids: selectedRowKeys,
           });
-
           if (success) {
             loadingHidde();
             message.success(
@@ -400,6 +371,7 @@ const QXStore: React.FC = () => {
               }),
             );
             if (actionRef.current) {
+              onCleanSelected();
               actionRef.current.reload();
               handleDone();
             }
@@ -429,7 +401,7 @@ const QXStore: React.FC = () => {
           }}
           pagination={paginationProps}
           request={(params) => {
-            params.useType = "EXTERNAL";
+            params.useType = "INTERNAL";
             const res = queryStoreList({ ...params });
             res.then((value) => {
               params.pageSize = value.total;
@@ -472,7 +444,7 @@ const QXStore: React.FC = () => {
                   type="primary"
                   size="small"
                   onClick={() => {
-                    handleRemoveByIds(selectedRowKeys);
+                    handleRemoveByIds(selectedRowKeys,onCleanSelected);
                   }}
                 >
                   <DeleteOutlined />
@@ -492,21 +464,7 @@ const QXStore: React.FC = () => {
             >
               <PlusOutlined /> <FormattedMessage id="pages.new" />
             </Button>,
-            <Button
-              type="primary"
-              key="primary"
-              size="small"
-              onClick={async () => {
-                const success = await handleSyncFNJStore();
-                if (success) {
-                  if (actionRef.current) {
-                    actionRef.current.reload();
-                  }
-                }
-              }}
-            >
-              <PlusOutlined /> 同步菲尼基站点数据
-            </Button>,
+            
           ]}
         />
 

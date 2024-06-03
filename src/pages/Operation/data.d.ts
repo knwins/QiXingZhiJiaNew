@@ -57,9 +57,10 @@ export type StoreAnalyseItem = {
   id: string;
   category: string;
   total?: number;
+  systemTotal?: number;
   noneTotal?: number;
   maintenanceTotal?: number;
-  brandSpec?: OptionItem;
+  ownership?: OptionItem;
   store?: StoreItem;
   business?: BusinessItem;
   user: UserItem;
@@ -103,7 +104,7 @@ export type StockOperationItem = {
   toScreateTime: string;
   supplierName: string;
   toCreateTime: Date;
-  brandSpec: OptionItem; // 产品品牌规格
+  ownership: OptionItem; // 产品品牌规格
 };
 
 export type StockOperationParams = {

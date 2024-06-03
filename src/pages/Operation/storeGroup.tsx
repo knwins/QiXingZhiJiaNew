@@ -18,7 +18,7 @@ import {
 const StoreGroup: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [done, setDone] = useState<boolean>(false);
-  const [visible, setVisible] = useState<boolean>(false);
+  const [editView, setEditView] = useState<boolean>(false);
   const [currentRow, setCurrentRow] = useState<StoreGroupItem>();
 
   //国际化
@@ -143,7 +143,7 @@ const StoreGroup: React.FC = () => {
 
   const handleDone = () => {
     setDone(false);
-    setVisible(false);
+    setEditView(false);
     setCurrentRow(undefined);
   };
 
@@ -172,24 +172,6 @@ const StoreGroup: React.FC = () => {
       width: 'md',
       ellipsis: true,
     },
-    {
-      title: '群组类别',
-      dataIndex: 'useType',
-      valueType: 'text',
-      hideInForm: true,
-      width: 'sm',
-      valueEnum: {
-        INTERNAL: {
-          text: '内部组',
-          type: 'INTERNAL',
-        },
-        EXTERNAL: {
-          text: '外部组',
-          type: 'EXTERNAL',
-        },
-      },
-    },
-
     {
       title: '运营商',
       dataIndex: ['business', 'name'],
@@ -239,7 +221,7 @@ const StoreGroup: React.FC = () => {
             key="edit"
             onClick={() => {
               setCurrentRow(record);
-              setVisible(true);
+              setEditView(true);
             }}
           >
             <FormattedMessage id="pages.edit" />
@@ -267,6 +249,7 @@ const StoreGroup: React.FC = () => {
           }}
           pagination={paginationProps}
           request={(params) => {
+            params.useType='EXTERNAL';
             const res = queryStoreGroupList({ ...params });
             res.then((value) => {
               params.pageSize = value.total;
@@ -280,7 +263,7 @@ const StoreGroup: React.FC = () => {
               key="primary"
               size="small"
               onClick={() => {
-                setVisible(true);
+                setEditView(true);
               }}
             >
               <PlusOutlined /> <FormattedMessage id="pages.new" />
@@ -290,13 +273,13 @@ const StoreGroup: React.FC = () => {
 
         <StoreGroupModel
           done={done}
-          visible={visible}
+          open={editView}
           current={currentRow || {}}
           onDone={handleDone}
           onSubmit={async (value) => {
             const success = await handleAction(value as StoreGroupItem);
             if (success) {
-              setVisible(false);
+              setEditView(false);
               setCurrentRow(undefined);
               if (actionRef.current) {
                 actionRef.current.reload();
